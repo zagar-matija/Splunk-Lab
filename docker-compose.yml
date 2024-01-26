@@ -1,0 +1,42 @@
+version: "3.6"
+
+networks:
+  splunknet:
+    attachable: true
+
+services:
+  uf1:
+    networks:
+      splunknet:
+        aliases:
+          - spl_forwarder
+    image: ${UF_IMAGE:-splunk/universalforwarder:latest}
+    hostname: spl_forwarder
+    container_name: spl_forwarder
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_PASSWORD=12345678
+    volumes:
+      - /home/kali/splunk-lab/dns.log:/var/log/zeek
+      - /home/kali/splunk-lab/opt_splunk_etc:/opt/splunkforwarder/etc/system/local
+    depends_on: 
+      - so1
+
+
+  so1:
+    networks:
+      splunknet:
+        aliases:
+          - spl_server
+    image: ${SPLUNK_IMAGE:-splunk/splunk:latest}
+    hostname: spl_server
+    container_name: spl_server
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_STANDALONE_URL=spl_server
+      - SPLUNK_ENABLE_LISTEN=9997
+      - SPLUNK_PASSWORD=12345678
+    volumes:
+      - /home/kali/splunk-lab/default.yml:/tmp/defaults/default.yml
+    ports:
+      - "8008:8000"
